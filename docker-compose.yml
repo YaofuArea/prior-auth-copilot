@@ -1,0 +1,7 @@
+# Local FHIR R4 server (HAPI FHIR). Data lives inside the container and is
+# lost when the container is removed; run seed.py again to recreate it.
+services:
+  fhir:
+    image: hapiproject/hapi:v8.12.0-2
+    ports:
+      - "8080:8080"

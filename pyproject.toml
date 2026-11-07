@@ -1,0 +1,9 @@
+[project]
+name = "prior-auth-copilot"
+version = "0.1.0"
+description = "Prior authorization copilot: checks a GLP-1 request against payer criteria using the patient chart from a FHIR server"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "httpx>=0.28.1",
+]
