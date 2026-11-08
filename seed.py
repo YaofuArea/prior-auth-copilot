@@ -30,7 +30,9 @@ BMI = ("39156-5", "Body mass index (BMI) [Ratio]")
 METFORMIN = ("6809", "metformin")
 SEMAGLUTIDE = ("1991302", "semaglutide")
 
-# id, name, birth date, gender, expected outcome, chart facts.
+# id, name, birth date, gender, (expected decision, why), chart facts.
+# Decisions: "meets", "not_met" (a criterion fails), "missing" (documentation
+# needed before a decision can be made).
 # Facts: ("condition", code, days ago) / ("lab", code, value, unit, days ago)
 #        / ("med", code, days ago). The semaglutide order is added to every case.
 CASES = [
@@ -39,7 +41,7 @@ CASES = [
         ("Rivera", "Ana"),
         "1968-04-12",
         "female",
-        "meets all criteria",
+        ("meets", "meets all criteria"),
         [
             ("condition", T2D, 900),
             ("lab", A1C, 8.9, "%", 240),
@@ -52,7 +54,7 @@ CASES = [
         ("Okafor", "James"),
         "1975-09-30",
         "male",
-        "no metformin trial (step therapy not met)",
+        ("not_met", "no metformin trial (step therapy not met)"),
         [
             ("condition", T2D, 200),
             ("lab", A1C, 7.8, "%", 30),
@@ -63,7 +65,7 @@ CASES = [
         ("Chen", "Lily"),
         "1990-01-22",
         "female",
-        "no type 2 diabetes diagnosis (weight loss only)",
+        ("not_met", "no type 2 diabetes diagnosis (weight loss only)"),
         [
             ("condition", OBESITY, 500),
             ("lab", BMI, 33.1, "kg/m2", 20),
@@ -75,7 +77,7 @@ CASES = [
         ("Novak", "Peter"),
         "1959-07-03",
         "male",
-        "latest A1C is over a year old (missing documentation)",
+        ("missing", "latest A1C is over a year old (missing documentation)"),
         [
             ("condition", T2D, 1500),
             ("lab", A1C, 8.1, "%", 420),
@@ -189,8 +191,8 @@ def main() -> None:
     response = client.post("", json=bundle)
     response.raise_for_status()
     print(f"Loaded {len(entries)} resources into {FHIR_BASE}")
-    for pid, _name, _birth, _gender, expected, _facts in CASES:
-        print(f"  {pid}: {expected}")
+    for pid, _name, _birth, _gender, (decision, why), _facts in CASES:
+        print(f"  {pid}: {decision:8} {why}")
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@ A copilot for prior authorization: when a doctor orders a medicine that the insu
 
 The first use case is **semaglutide (a GLP-1 medicine) for type 2 diabetes**, a common and heavily reviewed prior authorization request.
 
-> All patients are synthetic and the payer policy will be fictional. Not for clinical use.
+> All patients are synthetic and the payer (Example Health Plan) is fictional. Not for clinical use.
 
-**Status:** work in progress. Step 1 (local FHIR server with test patients) is done.
+**Status:** work in progress. Done: local FHIR server with test patients, the payer policy, and a rule-based baseline checker.
 
 ## Setup
 
@@ -17,13 +17,15 @@ docker compose up -d        # local HAPI FHIR R4 server at http://localhost:8080
 uv sync
 uv run seed.py              # load the test patients
 uv run fhir.py pa-01        # print one patient's chart
+uv run criteria.py          # rule-based check of every test patient
+uv run criteria.py pa-04    # one patient, with the evidence for each criterion
 ```
 
 `seed.py` can be run again at any time: every resource has a fixed id, so it updates instead of duplicating. The server keeps data only while its container exists (`docker compose down` deletes it).
 
 ## Test cases
 
-Each synthetic patient has a draft semaglutide order and differs from the others in one thing, so each tests one criterion:
+Each synthetic patient has a draft semaglutide order. Each case is built around one criterion; pa-03, a weight-loss request, fails several at once, as such a request would in practice:
 
 | Patient | Chart | Expected |
 |---|---|---|
@@ -34,6 +36,22 @@ Each synthetic patient has a draft semaglutide order and differs from the others
 
 Codes: diagnoses in ICD-10-CM, labs in LOINC (`4548-4` A1C, `39156-5` BMI), medicines in RxNorm (`6809` metformin, `1991302` semaglutide).
 
+## Payer policy and baseline
+
+`data/policy/glp1-t2d.md` is the coverage policy of the fictional Example Health Plan, written in the style of public payer drug policies. Semaglutide is approved when all five criteria hold:
+
+| | Criterion | Where the evidence is |
+|---|---|---|
+| C1 | Age 18 or older | Patient |
+| C2 | Type 2 diabetes diagnosis (ICD-10 E11.x) | Condition |
+| C3 | Latest A1C ≥ 7.0%, dated within 180 days | Observation |
+| C4 | Metformin for ≥ 90 days, **or** intolerance/contraindication | MedicationRequest, **or clinical notes** |
+| C5 | No personal/family history of MTC, no MEN 2 | Condition, **or clinical notes** |
+
+`criteria.py` is the rule-based baseline. It turns each criterion into a check over FHIR data and returns `met`, `not_met` or `missing`, with the FHIR resources it used as evidence. The case decision is `not_met` if any criterion fails, otherwise `missing` if any is undecidable, otherwise `meets`. It gets all 4 current cases right.
+
+The rules only see structured data. The parts in bold live in free-text notes, which the rules cannot read; those are where an LLM should earn its place.
+
 ## Files
 
 | File | What it is |
@@ -41,3 +59,5 @@ Codes: diagnoses in ICD-10-CM, labs in LOINC (`4548-4` A1C, `39156-5` BMI), medi
 | `docker-compose.yml` | Local HAPI FHIR server, version pinned |
 | `seed.py` | Builds the test patients as FHIR resources and loads them in one transaction |
 | `fhir.py` | Small FHIR client: search with paging, and read a patient's conditions, observations and medication requests |
+| `data/policy/glp1-t2d.md` | Fictional payer policy for semaglutide in type 2 diabetes |
+| `criteria.py` | Rule-based baseline: checks each policy criterion against the chart, with evidence |
