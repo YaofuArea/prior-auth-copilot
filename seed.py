@@ -5,6 +5,10 @@ Each patient is one prior authorization case: a doctor has ordered semaglutide
 differ in one thing at a time, so later we can check that the copilot reaches
 the expected decision for the expected reason.
 
+Cases pa-05 to pa-07 can only be decided correctly by reading the clinical
+note (a DocumentReference); the structured data alone points the wrong way
+(pa-05, pa-06) or contains a misleading keyword (pa-07).
+
 All patients are fictional. Dates are relative to today, so "A1C from 2 months
 ago" stays 2 months old whenever you run this.
 
@@ -14,6 +18,7 @@ updates the same resources instead of creating duplicates.
 Usage: uv run seed.py
 """
 
+import base64
 from datetime import date, timedelta
 
 from fhir import FHIR_BASE, client
@@ -34,7 +39,8 @@ SEMAGLUTIDE = ("1991302", "semaglutide")
 # Decisions: "meets", "not_met" (a criterion fails), "missing" (documentation
 # needed before a decision can be made).
 # Facts: ("condition", code, days ago) / ("lab", code, value, unit, days ago)
-#        / ("med", code, days ago). The semaglutide order is added to every case.
+#        / ("med", code, days ago[, status]) / ("note", text, days ago).
+# The semaglutide order is added to every case.
 CASES = [
     (
         "pa-01",
@@ -82,6 +88,74 @@ CASES = [
             ("condition", T2D, 1500),
             ("lab", A1C, 8.1, "%", 420),
             ("med", METFORMIN, 1200),
+        ],
+    ),
+    (
+        "pa-05",
+        ("Haddad", "Omar"),
+        "1971-11-18",
+        "male",
+        ("meets", "metformin stopped for intolerance, documented only in a note"),
+        [
+            ("condition", T2D, 700),
+            ("lab", A1C, 8.6, "%", 45),
+            ("med", METFORMIN, 300, "stopped"),
+            (
+                "note",
+                (
+                    "Follow-up for type 2 diabetes. Metformin 500 mg twice daily was "
+                    "started 10 months ago and stopped after 3 weeks because of severe "
+                    "diarrhea and abdominal cramping. A trial of extended-release "
+                    "metformin 500 mg daily caused the same symptoms and was also "
+                    "stopped. Considered intolerant to metformin. A1C remains above "
+                    "goal; plan to start a GLP-1 receptor agonist."
+                ),
+                45,
+            ),
+        ],
+    ),
+    (
+        "pa-06",
+        ("Brennan", "Claire"),
+        "1966-02-09",
+        "female",
+        ("not_met", "family history of medullary thyroid carcinoma, only in a note"),
+        [
+            ("condition", T2D, 1100),
+            ("lab", A1C, 8.0, "%", 50),
+            ("med", METFORMIN, 900),
+            (
+                "note",
+                (
+                    "Diabetes visit. On metformin 1000 mg twice daily for over 2 years "
+                    "with good adherence; A1C still 8.0%. Discussed adding a GLP-1 "
+                    "receptor agonist. Family history: mother was diagnosed with "
+                    "medullary thyroid carcinoma at age 52. Sister has hypertension."
+                ),
+                50,
+            ),
+        ],
+    ),
+    (
+        "pa-07",
+        ("Santos", "Maria"),
+        "1980-06-25",
+        "female",
+        ("meets", "note mentions thyroid carcinoma only to rule it out"),
+        [
+            ("condition", T2D, 600),
+            ("lab", A1C, 7.6, "%", 20),
+            ("med", METFORMIN, 500),
+            (
+                "note",
+                (
+                    "Patient asked about the thyroid cancer warning on the GLP-1 "
+                    "medication guide. Reviewed history: no personal or family history "
+                    "of medullary thyroid carcinoma or MEN 2. Continue metformin; add "
+                    "semaglutide if approved."
+                ),
+                20,
+            ),
         ],
     ),
 ]
@@ -148,16 +222,38 @@ def build_resources(case) -> list[dict]:
                 }
             )
         elif kind == "med":
-            _, code, days_ago = fact
+            _, code, days_ago, *rest = fact
             resources.append(
                 {
                     "resourceType": "MedicationRequest",
                     "id": f"{pid}-medication-{n}",
-                    "status": "active",
+                    "status": rest[0] if rest else "active",
                     "intent": "order",
                     "medicationCodeableConcept": concept(RXNORM, code),
                     "subject": subject,
                     "authoredOn": iso(days_ago),
+                }
+            )
+        elif kind == "note":
+            _, text, days_ago = fact
+            # A free-text note is stored as a DocumentReference with the text
+            # base64-encoded in an attachment.
+            resources.append(
+                {
+                    "resourceType": "DocumentReference",
+                    "id": f"{pid}-note-{n}",
+                    "status": "current",
+                    "type": concept(LOINC, ("11506-3", "Progress note")),
+                    "subject": subject,
+                    "date": f"{iso(days_ago)}T09:00:00Z",
+                    "content": [
+                        {
+                            "attachment": {
+                                "contentType": "text/plain",
+                                "data": base64.b64encode(text.encode()).decode(),
+                            }
+                        }
+                    ],
                 }
             )
 

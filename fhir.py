@@ -2,12 +2,14 @@
 
 FHIR stores a chart as separate resources that point to the patient:
 Patient (who), Condition (diagnoses), Observation (labs, vitals) and
-MedicationRequest (prescriptions). To read a chart we search each resource
+MedicationRequest (prescriptions) and DocumentReference (clinical notes).
+To read a chart we search each resource
 type for `patient=<id>`.
 
 Usage: uv run fhir.py pa-01      (prints that patient's chart)
 """
 
+import base64
 import os
 import sys
 
@@ -65,6 +67,21 @@ def get_medication_requests(patient_id: str) -> list[dict]:
     return search("MedicationRequest", patient=patient_id)
 
 
+def get_notes(patient_id: str) -> list[dict]:
+    """Clinical notes, newest first, as {"ref", "date", "text"}."""
+    notes = []
+    for doc in search("DocumentReference", patient=patient_id, _sort="-date"):
+        attachment = doc["content"][0]["attachment"]
+        notes.append(
+            {
+                "ref": f"DocumentReference/{doc['id']}",
+                "date": doc["date"][:10],
+                "text": base64.b64decode(attachment["data"]).decode(),
+            }
+        )
+    return notes
+
+
 def coding(concept: dict) -> str:
     """'E11.9 Type 2 diabetes mellitus ...' from a CodeableConcept."""
     c = concept["coding"][0]
@@ -97,6 +114,10 @@ def print_chart(patient_id: str) -> None:
             f"  {coding(m['medicationCodeableConcept'])}  "
             f"({m['status']}, written {m['authoredOn']})"
         )
+
+    print("\nNotes:")
+    for note in get_notes(patient_id):
+        print(f"  {note['date']}  {note['ref']}\n    {note['text']}")
 
 
 if __name__ == "__main__":
