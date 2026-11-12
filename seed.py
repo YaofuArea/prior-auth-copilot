@@ -30,6 +30,8 @@ UCUM = "http://unitsofmeasure.org"
 
 T2D = ("E11.9", "Type 2 diabetes mellitus without complications")
 OBESITY = ("E66.9", "Obesity, unspecified")
+T1D = ("E10.9", "Type 1 diabetes mellitus without complications")
+THYROID_CANCER = ("C73", "Malignant neoplasm of thyroid gland")
 A1C = ("4548-4", "Hemoglobin A1c/Hemoglobin.total in Blood")
 BMI = ("39156-5", "Body mass index (BMI) [Ratio]")
 METFORMIN = ("6809", "metformin")
@@ -41,7 +43,9 @@ SEMAGLUTIDE = ("1991302", "semaglutide")
 # Facts: ("condition", code, days ago) / ("lab", code, value, unit, days ago)
 #        / ("med", code, days ago[, status]) / ("note", text, days ago).
 # The semaglutide order is added to every case.
-CASES = [
+# Development cases: used while building the checkers and clarifying the
+# policy, so results on them are optimistic.
+DEV_CASES = [
     (
         "pa-01",
         ("Rivera", "Ana"),
@@ -159,6 +163,145 @@ CASES = [
         ],
     ),
 ]
+
+# Test cases: written, with their expected decisions, after policy v1.1 and
+# before the agent was run on them.
+TEST_CASES = [
+    (
+        "pa-08",
+        ("Kim", "Daniel"),
+        "1977-03-14",
+        "male",
+        ("not_met", "metformin for only 60 days"),
+        [
+            ("condition", T2D, 400),
+            ("lab", A1C, 9.2, "%", 100),
+            ("med", METFORMIN, 60),
+        ],
+    ),
+    (
+        "pa-09",
+        ("Walker", "Grace"),
+        "1962-12-01",
+        "female",
+        ("meets", "A1C exactly 7.0%, 170 days old (both at the boundary)"),
+        [
+            ("condition", T2D, 1300),
+            ("lab", A1C, 7.0, "%", 170),
+            ("med", METFORMIN, 800),
+        ],
+    ),
+    (
+        "pa-10",
+        ("Ibrahim", "Yusuf"),
+        "1955-08-19",
+        "male",
+        ("meets", "metformin contraindicated by kidney function, only in a note"),
+        [
+            ("condition", T2D, 2000),
+            ("lab", A1C, 8.3, "%", 35),
+            (
+                "note",
+                (
+                    "Nephrology follow-up. Chronic kidney disease stage 4, latest "
+                    "eGFR 24 mL/min/1.73 m2. Metformin is contraindicated at this "
+                    "level of kidney function and has never been prescribed. "
+                    "Diabetes remains above goal on current therapy."
+                ),
+                35,
+            ),
+        ],
+    ),
+    (
+        "pa-11",
+        ("Lopez", "Sofia"),
+        "1984-05-07",
+        "female",
+        ("not_met", "latest A1C 6.6%; the higher value in the note is a year old"),
+        [
+            ("condition", T2D, 900),
+            ("lab", A1C, 6.6, "%", 25),
+            ("med", METFORMIN, 700),
+            (
+                "note",
+                (
+                    "A1C was 8.5% at this time last year and has improved to 6.6% "
+                    "on metformin with diet changes. Patient asks about semaglutide "
+                    "after hearing about it from a friend."
+                ),
+                25,
+            ),
+        ],
+    ),
+    (
+        "pa-12",
+        ("Murphy", "Ethan"),
+        "1995-10-30",
+        "male",
+        ("not_met", "type 1 diabetes, not type 2"),
+        [
+            ("condition", T1D, 4000),
+            ("lab", A1C, 8.8, "%", 40),
+        ],
+    ),
+    (
+        "pa-13",
+        ("Patel", "Asha"),
+        "1970-04-02",
+        "female",
+        ("meets", "thyroid cancer code, but papillary, not medullary"),
+        [
+            ("condition", T2D, 1000),
+            ("condition", THYROID_CANCER, 4000),
+            ("lab", A1C, 8.0, "%", 30),
+            ("med", METFORMIN, 600),
+            (
+                "note",
+                (
+                    "History of papillary thyroid cancer treated with total "
+                    "thyroidectomy in 2015, no recurrence. No family history of "
+                    "medullary thyroid carcinoma or MEN 2. Diabetes not at goal "
+                    "on metformin."
+                ),
+                30,
+            ),
+        ],
+    ),
+    (
+        "pa-14",
+        ("Nguyen", "Linh"),
+        "1973-01-16",
+        "female",
+        ("not_met", "stopped metformin by choice, not for intolerance"),
+        [
+            ("condition", T2D, 500),
+            ("lab", A1C, 8.4, "%", 15),
+            ("med", METFORMIN, 200, "stopped"),
+            (
+                "note",
+                (
+                    "Patient stopped metformin about a month after starting it "
+                    "because she does not like taking pills every day. She reported "
+                    "no side effects. Prefers a once-weekly injection."
+                ),
+                15,
+            ),
+        ],
+    ),
+    (
+        "pa-15",
+        ("Foster", "Robert"),
+        "1961-09-09",
+        "male",
+        ("missing", "no A1C result on file at all"),
+        [
+            ("condition", T2D, 300),
+            ("med", METFORMIN, 250),
+        ],
+    ),
+]
+
+CASES = DEV_CASES + TEST_CASES
 
 
 def iso(days_ago: int) -> str:

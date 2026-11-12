@@ -5,5 +5,6 @@ description = "Prior authorization copilot: checks a GLP-1 request against payer
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "anthropic>=2.7.0",
     "httpx>=0.28.1",
 ]

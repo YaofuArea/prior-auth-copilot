@@ -148,16 +148,19 @@ def check_patient(
         check_metformin(get_medication_requests(patient_id), today),
         check_exclusions(conditions),
     ]
+    return decide(findings), findings
+
+
+def decide(findings: list[Finding]) -> str:
+    """Combine per-criterion findings into one case decision."""
     statuses = {f.status for f in findings}
     # A failed criterion decides the case even if something else is missing:
     # a new A1C will not fix a missing diagnosis.
     if "not_met" in statuses:
-        decision = "not_met"
-    elif "missing" in statuses:
-        decision = "missing"
-    else:
-        decision = "meets"
-    return decision, findings
+        return "not_met"
+    if "missing" in statuses:
+        return "missing"
+    return "meets"
 
 
 def main() -> None:
