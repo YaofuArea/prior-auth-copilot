@@ -1,0 +1,780 @@
+{
+  "model": "claude-opus-5-5",
+  "run_at": "2026-11-14T21:12:18",
+  "runs": [
+    {
+      "case": "pa-01",
+      "split": "dev",
+      "expected": "meets",
+      "why": "meets all criteria",
+      "rules": "meets",
+      "agent": "meets",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1968-04-12, so she is 58 years old today (2026-11-14), which meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-01"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of E11.9, type 2 diabetes mellitus without complications, which falls under E11.x.",
+          "evidence": [
+            "Condition/pa-01-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.4% on 2026-09-12, which is 63 days ago (within 180 days) and at or above 7.0%.",
+          "evidence": [
+            "Observation/pa-01-observation-3"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin was prescribed on 2025-10-07 and is still active, so the patient has been on it for more than 13 months, well over the required 90 days.",
+          "evidence": [
+            "MedicationRequest/pa-01-medication-4"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "The prescriber attests to this on the request form, so the review only looks for contrary evidence. The chart has no diagnosis of medullary thyroid carcinoma (personal or family) or MEN 2, and there are no clinical notes.",
+          "evidence": [
+            "Condition/pa-01-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-02",
+      "split": "dev",
+      "expected": "not_met",
+      "why": "no metformin trial (step therapy not met)",
+      "rules": "not_met",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1975-09-30, so he is 51 years old today (2026-11-14). That meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-02"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus (E11.9), which falls under the required E11.x codes.",
+          "evidence": [
+            "Condition/pa-02-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 7.8%, dated 2026-10-12. That is 33 days ago, well within the 180-day window, and at or above the 7.0% threshold.",
+          "evidence": [
+            "Observation/pa-02-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "not_met",
+          "reason": "The only prescription in the chart is the draft semaglutide order, so there is no metformin trial. The chart also has no clinical notes describing a metformin intolerance or contraindication. Under policy version 1.1, this means the criterion is not met.",
+          "evidence": [
+            "MedicationRequest/pa-02-order"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the chart shows medullary thyroid carcinoma (personal or family history) or MEN 2. The only diagnosis is type 2 diabetes and there are no notes, so with the prescriber's attestation on the request form the criterion is met.",
+          "evidence": [
+            "Condition/pa-02-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-03",
+      "split": "dev",
+      "expected": "not_met",
+      "why": "no type 2 diabetes diagnosis (weight loss only)",
+      "rules": "not_met",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1990-01-22, so she is 36 years old as of 2026-11-14, which meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-03"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "not_met",
+          "reason": "The only diagnosis on file is E66.9 (obesity, unspecified). There is no E11.x type 2 diabetes diagnosis, and the policy does not cover weight management under this criterion.",
+          "evidence": [
+            "Condition/pa-03-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "not_met",
+          "reason": "The most recent HbA1c is 5.6% on 2026-10-22. It is within the last 180 days but below the 7.0% threshold.",
+          "evidence": [
+            "Observation/pa-03-observation-3"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "not_met",
+          "reason": "No metformin prescription is on record, and there are no clinical notes describing a metformin intolerance or contraindication. Under policy version 1.1, that means this criterion is not met.",
+          "evidence": [
+            "MedicationRequest/pa-03-order"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the record documents medullary thyroid carcinoma (personal or family history) or MEN 2. The patient has no conditions on file other than obesity, and there are no notes.",
+          "evidence": [
+            "Condition/pa-03-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-04",
+      "split": "dev",
+      "expected": "missing",
+      "why": "latest A1C is over a year old (missing documentation)",
+      "rules": "missing",
+      "agent": "missing",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1959-07-03, so he is 67 years old today (2026-11-14). That meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-04"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of E11.9, type 2 diabetes mellitus without complications, with onset on 2022-10-03.",
+          "evidence": [
+            "Condition/pa-04-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "missing",
+          "reason": "The only HbA1c result is 8.1% from 2025-09-17. That is more than 180 days before today (2026-11-14), and there is no newer result, so the request would be pended until a current HbA1c is provided.",
+          "evidence": [
+            "Observation/pa-04-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin has been prescribed and active since 2023-07-30, which is well over the required 90 days.",
+          "evidence": [
+            "MedicationRequest/pa-04-medication-3"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the record shows medullary thyroid carcinoma (personal or family history) or MEN 2. The only diagnosis is type 2 diabetes and there are no clinical notes. The prescriber attests to this on the request form.",
+          "evidence": [
+            "Condition/pa-04-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-05",
+      "split": "dev",
+      "expected": "meets",
+      "why": "metformin stopped for intolerance, documented only in a note",
+      "rules": "not_met",
+      "agent": "meets",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1971-11-18, so he is 54 years old today (2026-11-14). That meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-05"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus without complications (E11.9), which is an E11.x code.",
+          "evidence": [
+            "Condition/pa-05-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.6% on 2026-09-27. It is 7.0% or higher and was taken within the last 180 days.",
+          "evidence": [
+            "Observation/pa-05-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "The metformin prescription was stopped, but the note documents an intolerance: \"Metformin 500 mg twice daily was started 10 months ago and stopped after 3 weeks because of severe diarrhea and abdominal cramping... Considered intolerant to metformin.\"",
+          "evidence": [
+            "DocumentReference/pa-05-note-4",
+            "MedicationRequest/pa-05-medication-3"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the conditions, notes or other records shows a personal or family history of MTC or MEN 2. The policy treats this criterion as met when the record has no contrary evidence, because the prescriber attests to it on the request form.",
+          "evidence": [
+            "Condition/pa-05-condition-1",
+            "DocumentReference/pa-05-note-4"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-06",
+      "split": "dev",
+      "expected": "not_met",
+      "why": "family history of medullary thyroid carcinoma, only in a note",
+      "rules": "meets",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born 1966-02-09, so she is 60 years old today (2026-11-14).",
+          "evidence": [
+            "Patient/pa-06"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus (E11.9).",
+          "evidence": [
+            "Condition/pa-06-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.0%, dated 2026-09-22. That is 53 days ago, so it is within 180 days, and it is at or above 7.0%.",
+          "evidence": [
+            "Observation/pa-06-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin has been active since 2024-05-25, well over 90 days. The note confirms: \"On metformin 1000 mg twice daily for over 2 years with good adherence.\"",
+          "evidence": [
+            "MedicationRequest/pa-06-medication-3",
+            "DocumentReference/pa-06-note-4"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "not_met",
+          "reason": "The chart shows a family history of medullary thyroid carcinoma (MTC). The note states: \"Family history: mother was diagnosed with medullary thyroid carcinoma at age 52.\"",
+          "evidence": [
+            "DocumentReference/pa-06-note-4"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-07",
+      "split": "dev",
+      "expected": "meets",
+      "why": "note mentions thyroid carcinoma only to rule it out",
+      "rules": "meets",
+      "agent": "meets",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1980-06-25, so she is 46 years old as of 2026-11-14.",
+          "evidence": [
+            "Patient/pa-07"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of E11.9, type 2 diabetes mellitus without complications.",
+          "evidence": [
+            "Condition/pa-07-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 7.6% on 2026-10-22. That is 23 days ago, well within 180 days, and above the 7.0% threshold.",
+          "evidence": [
+            "Observation/pa-07-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin was prescribed on 2025-06-29 and is still active, which is well over 90 days. The 2026-10-22 note confirms ongoing use: \"Continue metformin; add semaglutide if approved.\"",
+          "evidence": [
+            "MedicationRequest/pa-07-medication-3",
+            "DocumentReference/pa-07-note-4"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the record documents MTC or MEN 2. The note states: \"Reviewed history: no personal or family history of medullary thyroid carcinoma or MEN 2.\"",
+          "evidence": [
+            "DocumentReference/pa-07-note-4"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-08",
+      "split": "test",
+      "expected": "not_met",
+      "why": "metformin for only 60 days",
+      "rules": "not_met",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1977-03-14, so he is 49 years old as of 2026-11-14. That meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-08"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart lists an active diagnosis of E11.9, type 2 diabetes mellitus without complications.",
+          "evidence": [
+            "Condition/pa-08-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 9.2%, dated 2026-08-03. That is 103 days ago, within the 180-day window, and at or above 7.0%.",
+          "evidence": [
+            "Observation/pa-08-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "not_met",
+          "reason": "Metformin was first prescribed on 2026-09-12, which is only 63 days before today, short of the 90 days required. The chart has no clinical notes, so no metformin intolerance or contraindication is documented.",
+          "evidence": [
+            "MedicationRequest/pa-08-medication-3"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the chart documents medullary thyroid carcinoma (personal or family history) or MEN 2. The only condition listed is type 2 diabetes, and there are no clinical notes.",
+          "evidence": [
+            "Condition/pa-08-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-09",
+      "split": "test",
+      "expected": "meets",
+      "why": "A1C exactly 7.0%, 170 days old (both at the boundary)",
+      "rules": "meets",
+      "agent": "meets",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1962-12-01, so she is 63 years old today (2026-11-14). That meets the requirement of age 18 or older.",
+          "evidence": [
+            "Patient/pa-09"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus (E11.9), with onset on 2023-04-21.",
+          "evidence": [
+            "Condition/pa-09-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 7.0%, dated 2026-05-25. That is 173 days before today, so it falls within the 180-day window, and it meets the 7.0% threshold.",
+          "evidence": [
+            "Observation/pa-09-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "An active metformin prescription was written on 2024-09-02. That is more than two years ago, well past the required 90-day trial.",
+          "evidence": [
+            "MedicationRequest/pa-09-medication-3"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the record shows a personal or family history of medullary thyroid carcinoma or MEN 2. The conditions list has only type 2 diabetes, and the chart has no clinical notes. Under the policy, the prescriber's attestation on the request form covers this criterion when the record shows nothing to the contrary.",
+          "evidence": [
+            "Condition/pa-09-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-10",
+      "split": "test",
+      "expected": "meets",
+      "why": "metformin contraindicated by kidney function, only in a note",
+      "rules": "not_met",
+      "agent": "meets",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1955-08-19, so he is 71 years old today, which is 18 or older.",
+          "evidence": [
+            "Patient/pa-10"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus without complications (ICD-10-CM E11.9).",
+          "evidence": [
+            "Condition/pa-10-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.3% from 2026-10-07. That is 7.0% or higher and within the last 180 days.",
+          "evidence": [
+            "Observation/pa-10-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin was never prescribed, but the clinical note documents a contraindication from reduced kidney function: \"Chronic kidney disease stage 4, latest eGFR 24 mL/min/1.73 m2. Metformin is contraindicated at this level of kidney function and has never been prescribed.\" An eGFR below 30 is a contraindication the policy accepts. The eGFR value comes only from the note, because no eGFR lab result is in the chart.",
+          "evidence": [
+            "DocumentReference/pa-10-note-3"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "The conditions and notes do not mention medullary thyroid carcinoma (personal or family history) or MEN 2. Under the policy, the prescriber's attestation covers this when the record has no contrary evidence.",
+          "evidence": [
+            "Condition/pa-10-condition-1",
+            "DocumentReference/pa-10-note-3"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-11",
+      "split": "test",
+      "expected": "not_met",
+      "why": "latest A1C 6.6%; the higher value in the note is a year old",
+      "rules": "not_met",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1984-05-07, so she is 42 years old, which meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-11"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus without complications (E11.9).",
+          "evidence": [
+            "Condition/pa-11-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "not_met",
+          "reason": "The most recent HbA1c is 6.6%, dated 2026-10-17, which is within 180 days but below the 7.0% threshold. The note confirms it: \"A1C was 8.5% at this time last year and has improved to 6.6% on metformin with diet changes.\"",
+          "evidence": [
+            "Observation/pa-11-observation-2",
+            "DocumentReference/pa-11-note-4"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin was prescribed on 2024-12-11 and is still active, which is far longer than 90 days.",
+          "evidence": [
+            "MedicationRequest/pa-11-medication-3"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the record documents a personal or family history of medullary thyroid carcinoma or MEN 2, so the prescriber's attestation stands.",
+          "evidence": [
+            "Condition/pa-11-condition-1",
+            "DocumentReference/pa-11-note-4"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-12",
+      "split": "test",
+      "expected": "not_met",
+      "why": "type 1 diabetes, not type 2",
+      "rules": "not_met",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1995-10-30, so he is 31 years old as of 2026-11-14. That meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-12"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "not_met",
+          "reason": "The only diagnosis on file is E10.9, type 1 diabetes mellitus without complications. There is no type 2 diabetes (E11.x) diagnosis, and the policy excludes use in type 1 diabetes.",
+          "evidence": [
+            "Condition/pa-12-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.8%, dated 2026-10-02. That is within the last 180 days and at or above 7.0%.",
+          "evidence": [
+            "Observation/pa-12-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "not_met",
+          "reason": "The medication history has no metformin prescription, and the chart has no clinical notes describing a metformin intolerance or contraindication. Under policy version 1.1, a record that shows neither means this criterion is not met.",
+          "evidence": [
+            "MedicationRequest/pa-12-order"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the record documents a personal or family history of medullary thyroid carcinoma or MEN 2. With no contrary evidence, this criterion rests on the prescriber's attestation on the request form.",
+          "evidence": [
+            "Condition/pa-12-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-13",
+      "split": "test",
+      "expected": "meets",
+      "why": "thyroid cancer code, but papillary, not medullary",
+      "rules": "not_met",
+      "agent": "meets",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1970-04-02, so she is 56 years old as of 2026-11-14. That is 18 or older.",
+          "evidence": [
+            "Patient/pa-13"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus without complications (E11.9).",
+          "evidence": [
+            "Condition/pa-13-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.0%, dated 2026-10-12. That is within the last 180 days and at or above 7.0%.",
+          "evidence": [
+            "Observation/pa-13-observation-3"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin was prescribed on 2025-03-21 and is still active, which is well over 90 days. The note confirms ongoing use: \"Diabetes not at goal on metformin.\"",
+          "evidence": [
+            "MedicationRequest/pa-13-medication-4",
+            "DocumentReference/pa-13-note-5"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "The thyroid cancer on record (C73) is papillary, not medullary: \"History of papillary thyroid cancer treated with total thyroidectomy in 2015, no recurrence.\" The same note says \"No family history of medullary thyroid carcinoma or MEN 2,\" so the record does not document MTC or MEN 2.",
+          "evidence": [
+            "Condition/pa-13-condition-2",
+            "DocumentReference/pa-13-note-5"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-14",
+      "split": "test",
+      "expected": "not_met",
+      "why": "stopped metformin by choice, not for intolerance",
+      "rules": "not_met",
+      "agent": "not_met",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born 1973-01-16, which makes her 53 years old on 2026-11-14.",
+          "evidence": [
+            "Patient/pa-14"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart lists an active diagnosis of E11.9, type 2 diabetes mellitus without complications.",
+          "evidence": [
+            "Condition/pa-14-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "met",
+          "reason": "The most recent HbA1c is 8.4% from 2026-10-27. That is at or above 7.0% and falls within the last 180 days.",
+          "evidence": [
+            "Observation/pa-14-observation-2"
+          ]
+        },
+        {
+          "criterion": "C4",
+          "status": "not_met",
+          "reason": "Metformin was prescribed on 2026-04-25 and later stopped. The note says: \"Patient stopped metformin about a month after starting it because she does not like taking pills every day. She reported no side effects.\" That is less than 90 days of use, and the note describes a preference, not an intolerance or contraindication.",
+          "evidence": [
+            "MedicationRequest/pa-14-medication-3",
+            "DocumentReference/pa-14-note-4"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "Nothing in the chart documents a personal or family history of medullary thyroid carcinoma or MEN 2. Under the policy, the prescriber's attestation on the request form covers this criterion.",
+          "evidence": [
+            "Condition/pa-14-condition-1",
+            "DocumentReference/pa-14-note-4"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    },
+    {
+      "case": "pa-15",
+      "split": "test",
+      "expected": "missing",
+      "why": "no A1C result on file at all",
+      "rules": "missing",
+      "agent": "missing",
+      "findings": [
+        {
+          "criterion": "C1",
+          "status": "met",
+          "reason": "The patient was born on 1961-09-09, so he is 65 years old as of 2026-11-14. That meets the 18-or-older requirement.",
+          "evidence": [
+            "Patient/pa-15"
+          ]
+        },
+        {
+          "criterion": "C2",
+          "status": "met",
+          "reason": "The chart has an active diagnosis of type 2 diabetes mellitus without complications (E11.9), which falls under ICD-10-CM E11.x.",
+          "evidence": [
+            "Condition/pa-15-condition-1"
+          ]
+        },
+        {
+          "criterion": "C3",
+          "status": "missing",
+          "reason": "The chart has no HbA1c result at all, so there is none from the last 180 days. Under the policy, the request will be pended until a current HbA1c is provided.",
+          "evidence": []
+        },
+        {
+          "criterion": "C4",
+          "status": "met",
+          "reason": "Metformin has been active since 2026-03-06. That is more than 250 days before today, well over the 90 days required.",
+          "evidence": [
+            "MedicationRequest/pa-15-medication-2"
+          ]
+        },
+        {
+          "criterion": "C5",
+          "status": "met",
+          "reason": "The chart has no conditions or notes documenting a personal or family history of medullary thyroid carcinoma, or MEN 2. Since the policy only checks the record for contrary evidence, this criterion is met based on the prescriber's attestation.",
+          "evidence": [
+            "Condition/pa-15-condition-1"
+          ]
+        }
+      ],
+      "cited_but_unseen": []
+    }
+  ]
+}

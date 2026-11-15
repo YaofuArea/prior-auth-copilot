@@ -25,6 +25,7 @@ from pathlib import Path
 
 import agent
 import criteria
+import seed
 from seed import CASES, TEST_CASES
 
 RESULTS = Path(__file__).parent / "results" / "agent_runs.json"
@@ -41,6 +42,11 @@ def error_kind(got: str, expected: str) -> str:
 
 
 def main() -> None:
+    # Case dates are relative to the day seed.py runs (e.g. an A1C from 170
+    # days ago), while the checks compare against today. Reseed so a case at
+    # the 180-day boundary does not drift past it on later days.
+    seed.main()
+    print()
     runs = []
     test_ids = {case[0] for case in TEST_CASES}
     counts = {
