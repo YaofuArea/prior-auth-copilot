@@ -6,7 +6,7 @@ The first use case is **semaglutide (a GLP-1 medicine) for type 2 diabetes**, a 
 
 > All patients are synthetic and the payer (Example Health Plan) is fictional. Not for clinical use.
 
-**Status:** work in progress. Done: local FHIR server with 15 test cases, the payer policy, a rule-based baseline, and an LLM agent that reads the chart including clinical notes. Next: drafting the request, the review step, and a deployed demo.
+**Status:** work in progress. Done: local FHIR server with 15 test cases, the payer policy, a rule-based baseline, an LLM agent that reads the chart including clinical notes, and a review step that drafts the request and writes it to FHIR only after the doctor signs. Next: a web demo and deployment.
 
 ## Results so far
 
@@ -34,6 +34,20 @@ payer policy (Markdown) ──────────────────�
 
 The decision rule: any `not_met` makes the case `not_met`, even if something else is missing (a new A1C will not fix a missing diagnosis); otherwise any `missing` makes it `missing`; otherwise `meets`.
 
+### From decision to request
+
+`review.py` turns the decision into what the clinic acts on:
+
+| Decision | Output |
+|---|---|
+| `meets` | A draft prior authorization request and a letter of medical necessity, shown for review |
+| `missing` | A to-do list, e.g. "need an HbA1c from the last 180 days" |
+| `not_met` | The reasons the request would not be approved |
+
+The request is a FHIR `Claim` with `use: "preauthorization"`, the resource the Da Vinci Prior Authorization Support (PAS) guide builds on. Every FHIR resource the agent cited is attached as `supportingInfo`, labeled with the criterion it supports, and the letter is attached as a `DocumentReference`. The letter is assembled from the agent's checked reasons and citations rather than written by a second LLM call, so it cannot contain claims that were never evaluated.
+
+**Nothing is written until the doctor types `sign`.** Signing also gives the C5 attestation (no history of medullary thyroid carcinoma or MEN 2), which the policy requires from the prescriber; an AI cannot attest for them. The letter and the Claim are then written in one FHIR transaction, so either both are stored or neither is.
+
 ## Setup
 
 Requires [Docker](https://www.docker.com/), [uv](https://docs.astral.sh/uv/), and an Anthropic API key for the agent.
@@ -49,6 +63,9 @@ uv run criteria.py pa-04    # one case, with the evidence for each criterion
 export ANTHROPIC_API_KEY=...
 uv run agent.py pa-05       # LLM agent on one case
 uv run evaluate.py          # rules vs agent on all 15 cases (15 API calls)
+
+uv run review.py pa-01           # agent + draft request; type "sign" to submit (one API call)
+uv run review.py pa-01 --saved   # same, reusing the findings saved by evaluate.py (free)
 ```
 
 `seed.py` can be run again at any time: every resource has a fixed id, so it updates instead of duplicating. Case dates are relative to the day it runs (e.g. "A1C from 170 days ago"), so `evaluate.py` reseeds first. The server keeps data only while its container exists (`docker compose down` deletes it).
@@ -111,7 +128,8 @@ Full agent output for every case, with reasons and citations: [`results/agent_ru
 
 - **15 cases, written by me.** I designed the cases knowing how both checkers work, and each tests one thing in a short, clean note. Real notes are long, contradictory and full of abbreviations. 8/8 on the test set shows the approach works on clear cases, not that it is reliable.
 - **One run.** An LLM can answer differently each time. Running each case several times would show how stable the decisions are.
-- **The agent only decides.** It does not yet draft the prior authorization request or letter, and nothing is written back to FHIR.
+- **Submission stops at our own FHIR server.** A real request would go to the payer's prior authorization API (the Da Vinci PAS workflow), which also requires PAS-specific profiles this Claim does not follow.
+- **The letter reads like a review.** Its sentences are the agent's reasons, which explain the decision ("the most recent HbA1c is 8.4% ... within 180 days") rather than argue for the patient as a doctor would. With `--saved`, the reasons also mention the date of that evaluation run.
 - **One policy, one drug.** The whole policy fits in the prompt, so no retrieval is needed yet. With many payers and drugs, the relevant policy would have to be retrieved first.
 
 ## Files
@@ -119,10 +137,12 @@ Full agent output for every case, with reasons and citations: [`results/agent_ru
 | File | What it is |
 |---|---|
 | `docker-compose.yml` | Local HAPI FHIR server, version pinned |
-| `seed.py` | The 15 test cases, built as FHIR resources and loaded in one transaction |
+| `seed.py` | The 15 test cases, the payer, the prescriber and each patient's coverage, loaded in one transaction |
 | `fhir.py` | Small FHIR client: search with paging; read conditions, observations, medication requests and notes |
 | `data/policy/glp1-t2d.md` | Fictional payer policy (v1.1, with revision history) |
 | `criteria.py` | Rule-based baseline, and `decide()`, the rule that combines findings into a decision |
 | `agent.py` | LLM agent: Claude with FHIR tools, schema-constrained findings, citation check |
 | `evaluate.py` | Rules vs agent on all cases, errors by type, dev and test reported separately |
+| `draft.py` | Builds the FHIR Claim and letter for `meets`, the to-do list for `missing`, the reasons for `not_met` |
+| `review.py` | Human review: shows the findings and draft, and writes to FHIR only after the doctor signs |
 | `results/` | Saved agent output for each evaluation run |

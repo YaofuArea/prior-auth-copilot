@@ -304,6 +304,19 @@ TEST_CASES = [
 CASES = DEV_CASES + TEST_CASES
 
 
+# Shared by every case: the payer and the prescribing doctor (both fictional).
+PAYER_ID = "example-health-plan"
+PRESCRIBER_ID = "dr-taylor"
+SHARED = [
+    {"resourceType": "Organization", "id": PAYER_ID, "name": "Example Health Plan"},
+    {
+        "resourceType": "Practitioner",
+        "id": PRESCRIBER_ID,
+        "name": [{"family": "Taylor", "given": ["Sam"], "prefix": ["Dr."]}],
+    },
+]
+
+
 def iso(days_ago: int) -> str:
     return (date.today() - timedelta(days=days_ago)).isoformat()
 
@@ -323,7 +336,15 @@ def build_resources(case) -> list[dict]:
             "name": [{"family": family, "given": [given]}],
             "birthDate": birth_date,
             "gender": gender,
-        }
+        },
+        # The patient's insurance with Example Health Plan.
+        {
+            "resourceType": "Coverage",
+            "id": f"{pid}-coverage",
+            "status": "active",
+            "beneficiary": subject,
+            "payor": [{"reference": f"Organization/{PAYER_ID}"}],
+        },
     ]
     for n, fact in enumerate(facts, start=1):
         kind = fact[0]
@@ -419,12 +440,10 @@ def build_resources(case) -> list[dict]:
 def main() -> None:
     # One transaction: the server applies all entries or none.
     entries = []
-    for case in CASES:
-        for resource in build_resources(case):
-            url = f"{resource['resourceType']}/{resource['id']}"
-            entries.append(
-                {"resource": resource, "request": {"method": "PUT", "url": url}}
-            )
+    resources = SHARED + [r for case in CASES for r in build_resources(case)]
+    for resource in resources:
+        url = f"{resource['resourceType']}/{resource['id']}"
+        entries.append({"resource": resource, "request": {"method": "PUT", "url": url}})
     bundle = {"resourceType": "Bundle", "type": "transaction", "entry": entries}
 
     response = client.post("", json=bundle)
