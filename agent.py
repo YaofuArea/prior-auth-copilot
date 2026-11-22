@@ -77,15 +77,6 @@ def _result(items: list[dict]) -> str:
     return json.dumps(items)
 
 
-def _ref(resource: dict) -> str:
-    return f"{resource['resourceType']}/{resource['id']}"
-
-
-def _code(concept: dict) -> dict:
-    c = concept["coding"][0]
-    return {"code": c["code"], "display": c.get("display", "")}
-
-
 @beta_tool
 def get_patient(patient_id: str) -> str:
     """Get the patient's name, gender and birth date.
@@ -93,18 +84,7 @@ def get_patient(patient_id: str) -> str:
     Args:
         patient_id: Patient id, e.g. pa-01.
     """
-    p = fhir.get_patient(patient_id)
-    name = p["name"][0]
-    return _result(
-        [
-            {
-                "ref": _ref(p),
-                "name": f"{' '.join(name['given'])} {name['family']}",
-                "gender": p["gender"],
-                "birth_date": p["birthDate"],
-            }
-        ]
-    )
+    return _result([fhir.patient_view(patient_id)])
 
 
 @beta_tool
@@ -114,17 +94,7 @@ def get_conditions(patient_id: str) -> str:
     Args:
         patient_id: Patient id, e.g. pa-01.
     """
-    return _result(
-        [
-            {
-                "ref": _ref(c),
-                **_code(c["code"]),
-                "clinical_status": c["clinicalStatus"]["coding"][0]["code"],
-                "onset": c.get("onsetDateTime"),
-            }
-            for c in fhir.get_conditions(patient_id)
-        ]
-    )
+    return _result(fhir.conditions_view(patient_id))
 
 
 @beta_tool
@@ -135,18 +105,7 @@ def get_observations(patient_id: str, loinc_code: str = "") -> str:
         patient_id: Patient id, e.g. pa-01.
         loinc_code: Optional LOINC code to get one test only, e.g. 4548-4 for HbA1c. Leave empty for all.
     """
-    return _result(
-        [
-            {
-                "ref": _ref(o),
-                **_code(o["code"]),
-                "value": o["valueQuantity"]["value"],
-                "unit": o["valueQuantity"]["unit"],
-                "date": o["effectiveDateTime"],
-            }
-            for o in fhir.get_observations(patient_id, loinc_code or None)
-        ]
-    )
+    return _result(fhir.observations_view(patient_id, loinc_code or None))
 
 
 @beta_tool
@@ -159,17 +118,7 @@ def get_medication_requests(patient_id: str) -> str:
     Args:
         patient_id: Patient id, e.g. pa-01.
     """
-    return _result(
-        [
-            {
-                "ref": _ref(m),
-                **_code(m["medicationCodeableConcept"]),
-                "status": m["status"],
-                "authored_on": m["authoredOn"],
-            }
-            for m in fhir.get_medication_requests(patient_id)
-        ]
-    )
+    return _result(fhir.medications_view(patient_id))
 
 
 @beta_tool

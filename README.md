@@ -66,7 +66,12 @@ uv run evaluate.py          # rules vs agent on all 15 cases (15 API calls)
 
 uv run review.py pa-01           # agent + draft request; type "sign" to submit (one API call)
 uv run review.py pa-01 --saved   # same, reusing the findings saved by evaluate.py (free)
+
+uv run uvicorn api:app --reload  # web API; interactive docs at http://localhost:8000/docs
+uv run pytest                    # API tests (need the FHIR server; no Claude calls)
 ```
+
+The web API serves saved agent results by default, so a public demo costs nothing. Live runs call Claude only with the passcode set in `DEMO_PASSCODE`, and are capped at `LIVE_RUNS_PER_DAY` (default 20). Submitting uses the server's own latest assessment of the case, never findings sent by the browser.
 
 `seed.py` can be run again at any time: every resource has a fixed id, so it updates instead of duplicating. Case dates are relative to the day it runs (e.g. "A1C from 170 days ago"), so `evaluate.py` reseeds first. The server keeps data only while its container exists (`docker compose down` deletes it).
 
@@ -145,4 +150,6 @@ Full agent output for every case, with reasons and citations: [`results/agent_ru
 | `evaluate.py` | Rules vs agent on all cases, errors by type, dev and test reported separately |
 | `draft.py` | Builds the FHIR Claim and letter for `meets`, the to-do list for `missing`, the reasons for `not_met` |
 | `review.py` | Human review: shows the findings and draft, and writes to FHIR only after the doctor signs |
+| `api.py` | FastAPI web API: cases, chart, assess (saved or live with passcode), submit |
+| `tests/test_api.py` | API tests, including every refusal path (no attestation, case not met, wrong passcode, daily limit) |
 | `results/` | Saved agent output for each evaluation run |

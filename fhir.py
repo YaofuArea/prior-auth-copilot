@@ -67,10 +67,19 @@ def get_medication_requests(patient_id: str) -> list[dict]:
     return search("MedicationRequest", patient=patient_id)
 
 
+PROGRESS_NOTE = "http://loinc.org|11506-3"
+
+
 def get_notes(patient_id: str) -> list[dict]:
-    """Clinical notes, newest first, as {"ref", "date", "text"}."""
+    """Clinical notes, newest first, as {"ref", "date", "text"}.
+
+    Only progress notes: other documents, such as the letter of medical
+    necessity this copilot writes, are not evidence about the patient.
+    """
     notes = []
-    for doc in search("DocumentReference", patient=patient_id, _sort="-date"):
+    for doc in search(
+        "DocumentReference", patient=patient_id, type=PROGRESS_NOTE, _sort="-date"
+    ):
         attachment = doc["content"][0]["attachment"]
         notes.append(
             {
@@ -80,6 +89,67 @@ def get_notes(patient_id: str) -> list[dict]:
             }
         )
     return notes
+
+
+# Flat views of each resource type, as the agent's tools and the web API see
+# them: one dict per resource, with its FHIR reference under "ref".
+
+
+def ref(resource: dict) -> str:
+    return f"{resource['resourceType']}/{resource['id']}"
+
+
+def _code(concept: dict) -> dict:
+    c = concept["coding"][0]
+    return {"code": c["code"], "display": c.get("display", "")}
+
+
+def patient_view(patient_id: str) -> dict:
+    p = get_patient(patient_id)
+    name = p["name"][0]
+    return {
+        "ref": ref(p),
+        "name": f"{' '.join(name['given'])} {name['family']}",
+        "gender": p["gender"],
+        "birth_date": p["birthDate"],
+    }
+
+
+def conditions_view(patient_id: str) -> list[dict]:
+    return [
+        {
+            "ref": ref(c),
+            **_code(c["code"]),
+            "clinical_status": c["clinicalStatus"]["coding"][0]["code"],
+            "onset": c.get("onsetDateTime"),
+        }
+        for c in get_conditions(patient_id)
+    ]
+
+
+def observations_view(patient_id: str, loinc_code: str | None = None) -> list[dict]:
+    return [
+        {
+            "ref": ref(o),
+            **_code(o["code"]),
+            "value": o["valueQuantity"]["value"],
+            "unit": o["valueQuantity"]["unit"],
+            "date": o["effectiveDateTime"],
+        }
+        for o in get_observations(patient_id, loinc_code)
+    ]
+
+
+def medications_view(patient_id: str) -> list[dict]:
+    return [
+        {
+            "ref": ref(m),
+            **_code(m["medicationCodeableConcept"]),
+            "status": m["status"],
+            "authored_on": m["authoredOn"],
+        }
+        for m in get_medication_requests(patient_id)
+    ]
 
 
 def coding(concept: dict) -> str:
