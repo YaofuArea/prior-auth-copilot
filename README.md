@@ -50,10 +50,22 @@ The request is a FHIR `Claim` with `use: "preauthorization"`, the resource the D
 
 ## Setup
 
+### Run everything with Docker
+
+Requires only [Docker](https://www.docker.com/).
+
+```bash
+docker compose up -d --build     # FHIR server + app; open http://localhost:8000
+```
+
+The app waits for the FHIR server, loads the test patients, and serves both the web page and the API. Without further setup it shows the agent's saved results. To allow live agent runs, copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY` and `DEMO_PASSCODE` before starting.
+
+### Development
+
 Requires [Docker](https://www.docker.com/), [uv](https://docs.astral.sh/uv/), and an Anthropic API key for the agent.
 
 ```bash
-docker compose up -d        # local HAPI FHIR R4 server at http://localhost:8080/fhir (about a minute to start)
+docker compose up -d fhir   # only the HAPI FHIR R4 server, at http://localhost:8080/fhir (about a minute to start)
 uv sync
 uv run seed.py              # load the test patients
 uv run fhir.py pa-05        # print one patient's chart, including notes
@@ -153,7 +165,8 @@ Full agent output for every case, with reasons and citations: [`results/agent_ru
 
 | File | What it is |
 |---|---|
-| `docker-compose.yml` | Local HAPI FHIR server, version pinned |
+| `docker-compose.yml` | The FHIR server (HAPI, version pinned) and the app |
+| `Dockerfile` | Two stages: builds the web app with Node, then a Python image that serves it and the API as a non-root user |
 | `seed.py` | The 15 test cases, the payer, the prescriber and each patient's coverage, loaded in one transaction |
 | `fhir.py` | Small FHIR client: search with paging; read conditions, observations, medication requests and notes |
 | `data/policy/glp1-t2d.md` | Fictional payer policy (v1.1, with revision history) |

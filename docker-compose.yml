@@ -1,7 +1,24 @@
-# Local FHIR R4 server (HAPI FHIR). Data lives inside the container and is
-# lost when the container is removed; run seed.py again to recreate it.
+# The whole app: the FHIR server and the copilot (API + web page).
+#   docker compose up -d --build     then open http://localhost:8000
+# For development with live reload, start only the FHIR server
+# (docker compose up -d fhir) and run the API and web app locally.
 services:
   fhir:
     image: hapiproject/hapi:v8.12.0-2
     ports:
       - "8080:8080"
+    # Data lives inside the container and is lost when it is removed; the
+    # app reloads the test patients every time it starts.
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      FHIR_BASE: http://fhir:8080/fhir
+      # Live agent runs. Leave DEMO_PASSCODE empty to turn them off.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DEMO_PASSCODE: ${DEMO_PASSCODE:-}
+      LIVE_RUNS_PER_DAY: ${LIVE_RUNS_PER_DAY:-20}
+    depends_on:
+      - fhir

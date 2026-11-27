@@ -9,6 +9,9 @@ Assessments come from the last evaluate.py run (results/agent_runs.json) by
 default, so the public demo costs nothing. A live run calls Claude and needs
 the passcode in DEMO_PASSCODE; live runs are also capped per day.
 
+If web/dist exists (the built front end, see the Dockerfile), it is served
+at /, so one process serves both the page and the API.
+
 Usage: uv run uvicorn api:app --reload    (API docs at http://localhost:8000/docs)
 """
 
@@ -16,13 +19,16 @@ import json
 import os
 import secrets
 import threading
+import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
 import anthropic
+import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import draft
@@ -32,6 +38,8 @@ import seed
 from criteria import Finding, decide
 
 RESULTS = Path(__file__).parent / "results" / "agent_runs.json"
+WEB_DIST = Path(__file__).parent / "web" / "dist"
+FHIR_WAIT_SECONDS = 300  # HAPI takes a minute or two to start
 DEMO_PASSCODE = os.environ.get("DEMO_PASSCODE", "")  # empty: live runs disabled
 LIVE_RUNS_PER_DAY = int(os.environ.get("LIVE_RUNS_PER_DAY", "20"))
 
@@ -52,9 +60,24 @@ live_runs = {"day": date.today(), "count": 0}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    wait_for_fhir()
     # Case dates are relative to the day they are loaded (see evaluate.py).
     seed.main()
     yield
+
+
+def wait_for_fhir() -> None:
+    """Block until the FHIR server answers, e.g. when both start together."""
+    deadline = time.monotonic() + FHIR_WAIT_SECONDS
+    while True:
+        try:
+            fhir.client.get("metadata").raise_for_status()
+            return
+        except httpx.HTTPError:
+            if time.monotonic() > deadline:
+                raise
+            print(f"Waiting for the FHIR server at {fhir.FHIR_BASE} ...")
+            time.sleep(5)
 
 
 app = FastAPI(title="Prior Auth Copilot", lifespan=lifespan)
@@ -172,3 +195,8 @@ def submit(patient_id: str, request: SubmitRequest) -> dict:
         "claim": claim.json(),
         "letter_ref": f"DocumentReference/{draft.letter_id(patient_id)}",
     }
+
+
+# Mounted last, so the /api routes above take precedence.
+if WEB_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")
